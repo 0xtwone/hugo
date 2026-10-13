@@ -177,7 +177,7 @@ For article pages, Hugo also emits:
 `article:tag`
 : The first 6 tags.
 
-For image metadata, Hugo emits up to 6 `og:image` tags.
+For image metadata, Hugo emits up to 6 `og:image` tags. When the image is a page or global resource, Hugo also emits `og:image:type`, and `og:image:width` and `og:image:height` if Hugo can read the image dimensions.
 
 {{% include "/_common/embedded-get-page-images.md" %}}
 
