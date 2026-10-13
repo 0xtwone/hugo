@@ -314,6 +314,63 @@ title: p0
 	b.AssertFileContent("public/s1/p5/index.html", `! og:description`)
 }
 
+// See issue 13478.
+func TestOpengraphTemplateImageDimensions(t *testing.T) {
+	t.Parallel()
+
+	files := `
+-- hugo.toml --
+baseURL = "https://example.org/"
+disableKinds = ['home','section','rss','sitemap','taxonomy','term']
+-- layouts/page.html --
+{{ partial "opengraph.html" . }}
+-- assets/global.jpg --
+sourcefilename: ../../resources/testdata/sunset.jpg
+-- content/p1/index.md --
+---
+title: p1
+---
+-- content/p1/featured.jpg --
+sourcefilename: ../../resources/testdata/sunset.jpg
+-- content/p2.md --
+---
+title: p2
+images: [global.jpg]
+---
+-- content/p3/index.md --
+---
+title: p3
+images: [circle.svg]
+---
+-- content/p3/circle.svg --
+sourcefilename: ../../resources/testdata/circle.svg
+-- content/p4.md --
+---
+title: p4
+images: [static.jpg]
+---
+-- content/p5.md --
+---
+title: p5
+images: [https://example.com/remote.jpg]
+---
+`
+
+	b := hugolib.Test(t, files)
+
+	dims := []string{
+		`<meta property="og:image:type" content="image/jpeg">`,
+		`<meta property="og:image:width" content="900">`,
+		`<meta property="og:image:height" content="562">`,
+	}
+
+	b.AssertFileContent("public/p1/index.html", append(dims, `<meta property="og:image" content="https://example.org/p1/featured.jpg">`)...)
+	b.AssertFileContent("public/p2/index.html", append(dims, `<meta property="og:image" content="https://example.org/global.jpg">`)...)
+	b.AssertFileContent("public/p3/index.html", `<meta property="og:image" content="https://example.org/p3/circle.svg">`, `<meta property="og:image:type" content="image/svg&#43;xml">`, `! og:image:width`)
+	b.AssertFileContent("public/p4/index.html", `<meta property="og:image" content="https://example.org/static.jpg">`, `! og:image:`)
+	b.AssertFileContent("public/p5/index.html", `<meta property="og:image" content="https://example.com/remote.jpg">`, `! og:image:`)
+}
+
 func TestPaginationTemplate(t *testing.T) {
 	t.Parallel()
 

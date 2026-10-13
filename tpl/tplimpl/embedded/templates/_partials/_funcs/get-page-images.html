@@ -6,12 +6,14 @@
 	{{- $featured := $resources.GetMatch "*feature*" -}}
 	{{- if not $featured }}{{ $featured = $resources.GetMatch "{*cover*,*thumbnail*}" }}{{ end -}}
 	{{- with $featured }}
-		{{- $imgs = $imgs | append (dict
-			"Image" .
-			"RelPermalink" .RelPermalink
-			"Permalink" .Permalink
-		)
-		}}
+		{{- $m := dict "Image" . "RelPermalink" .RelPermalink "Permalink" .Permalink "MediaType" .MediaType.Type }}
+		{{- if reflect.IsImageResourceWithMeta . }}
+			{{- $w := try .Width }}
+			{{- if not $w.Err }}
+				{{- $m = merge $m (dict "Width" $w.Value "Height" .Height) }}
+			{{- end }}
+		{{- end }}
+		{{- $imgs = $imgs | append $m }}
 	{{- end }}
 {{- end }}
 {{/* Use the first one of site images as the fallback. */}}
@@ -27,12 +29,14 @@
 	{{- if eq $url.Scheme "" }}
 		{{/* Internal image: check page resources first, then global resources. */}}
 		{{- with or ($resources.GetMatch $img) (resources.GetMatch $img) -}}
-			{{- $imgs = $imgs | append (dict
-				"Image" .
-				"RelPermalink" .RelPermalink
-				"Permalink" .Permalink
-			)
-			}}
+			{{- $m := dict "Image" . "RelPermalink" .RelPermalink "Permalink" .Permalink "MediaType" .MediaType.Type }}
+			{{- if reflect.IsImageResourceWithMeta . }}
+				{{- $w := try .Width }}
+				{{- if not $w.Err }}
+					{{- $m = merge $m (dict "Width" $w.Value "Height" .Height) }}
+				{{- end }}
+			{{- end }}
+			{{- $imgs = $imgs | append $m }}
 		{{- else }}
 			{{- $imgs = $imgs | append (dict
 				"RelPermalink" (relURL $img)
